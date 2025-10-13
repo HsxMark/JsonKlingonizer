@@ -1,0 +1,23 @@
+{
+  "api": {
+    "base_url": "https://api.funtranslations.com/translate/klingon.json",
+    "rate_limit": {
+      "requests_per_hour": 5,
+      "requests_per_day": 60,
+      "wait_on_limit": true
+    },
+    "retry": {
+      "max_retries": 3,
+      "backoff_factor": 2
+    }
+  },
+  "processing": {
+    "use_cache": true,
+    "cache_dir": "data/cache",
+    "batch_short_texts": true
+  },
+  "logging": {
+    "level": "INFO",
+    "show_progress": true
+  }
+}
