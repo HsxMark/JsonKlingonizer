@@ -57,19 +57,20 @@ class JSONExtractor:
                 "translated": None  # 将在翻译后填充
             })
     
-    def export_to_text(self, output_path: str) -> None:
+    def export_to_text(self, output_path: str, line_separator: str = "~") -> None:
         """
         将提取的值导出为纯文本文件（每行一个值）
         用于手动翻译
         
         Args:
             output_path: 输出文本文件路径
+            line_separator: 行分隔符（默认为 "~"），用于标记每行结尾，翻译后可以正确分割
         """
         with open(output_path, 'w', encoding='utf-8') as f:
             for item in self.values:
-                # 转义换行符以便每个值占一行
-                escaped_value = item['original'].replace('\n', '\\n')
-                f.write(f"{escaped_value}\n")
+                # 不再转义换行符，而是在末尾添加分隔符
+                # 这样即使文本被翻译成一行，也能通过分隔符正确还原
+                f.write(f"{item['original']}{line_separator}\n")
     
     def get_values(self) -> List[Dict[str, Any]]:
         """获取提取的值列表"""

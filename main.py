@@ -112,27 +112,45 @@ def main():
                 logger.error("❌ 使用 --extract-only 时必须指定 --text-file")
                 return 1
             
+            line_separator = config['processing'].get('line_separator', '~')
             logger.info(f"💾 正在导出到文本文件: {args.text_file}")
-            extractor.export_to_text(args.text_file)
+            logger.info(f"💡 使用行分隔符: '{line_separator}' (翻译后请保留此符号)")
+            extractor.export_to_text(args.text_file, line_separator)
             logger.info(f"✅ 已导出到 {args.text_file}")
-            logger.info("💡 您可以手动翻译该文件，然后使用 --from-text 导入")
+            logger.info(f"💡 每行末尾的 '{line_separator}' 符号用于标记换行，翻译时请保留它")
+            logger.info("💡 翻译完成后使用 --from-text 导入")
             return 0
         
         # ============= 翻译阶段 =============
         if args.from_text:
             # 从文本文件导入翻译
             logger.info(f"📖 正在从文本文件导入翻译: {args.from_text}")
+            line_separator = config['processing'].get('line_separator', '~')
+            
             with open(args.from_text, 'r', encoding='utf-8') as f:
-                translated_lines = f.readlines()
+                content = f.read()
+            
+            # 使用行分隔符分割文本，而不是按换行符
+            # 这样即使翻译后所有文本都在一行，也能正确分割
+            translated_lines = content.split(line_separator)
+            
+            # 移除最后一个元素，如果它只是文件末尾的空白
+            # 但要保留中间的空字符串（因为某些原始值可能就是空的）
+            if translated_lines and translated_lines[-1].strip() == '':
+                translated_lines = translated_lines[:-1]
+            
+            # 去除每个条目两端的换行符，但保留空字符串
+            translated_lines = [line.strip('\n\r') for line in translated_lines]
             
             if len(translated_lines) != len(values):
-                logger.error(f"❌ 文本文件行数 ({len(translated_lines)}) 与提取的值数量 ({len(values)}) 不匹配")
+                logger.error(f"❌ 文本条目数 ({len(translated_lines)}) 与提取的值数量 ({len(values)}) 不匹配")
+                logger.error(f"💡 提示：请确保翻译时保留了每行末尾的 '{line_separator}' 分隔符")
+                logger.info(f"📊 调试信息：提取了 {len(values)} 个值，导入了 {len(translated_lines)} 个条目")
                 return 1
             
-            for i, line in enumerate(translated_lines):
-                # 反转义换行符
-                translated = line.strip().replace('\\n', '\n')
-                values[i]['translated'] = translated
+            for i, translated_text in enumerate(translated_lines):
+                # 直接使用分割后的文本
+                values[i]['translated'] = translated_text
             
             logger.info(f"✅ 已导入 {len(values)} 个翻译值")
         

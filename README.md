@@ -62,17 +62,25 @@ python main.py -i data/input/en.json -o data/output/tlh.json --use-cache
 
 ### 手动翻译模式
 
-当 API 限制较多时，可以使用手动模式：
+当 API 限制较多时，可以使用手动翻译模式：
 
 ```bash
 # 1. 提取所有值到文本文件
 python main.py -i data/input/en.json --extract-only -t values.txt
 
-# 2. 手动翻译 values.txt 文件（每行对应一个值）
+# 2. 手动翻译 values.txt 文件
+#    注意：每行末尾都有一个 ~ 符号，这是行分隔符，翻译时请务必保留
+#    即使翻译后所有文本都在一行，只要保留了 ~ 符号就能正确导入
 
 # 3. 从翻译好的文本文件重建 JSON
 python main.py -i data/input/en.json -o data/output/tlh.json --from-text translated.txt
 ```
+
+**重要提示**：
+- 提取的文本文件中，每行末尾都有一个 `~` 符号作为行分隔符
+- 翻译时**必须保留**这个符号，它用于标记每个值的结尾
+- 即使将所有文本复制到翻译网站后变成一行，只要保留了 `~` 符号，导入时就能正确分割
+- 可以在 `config/config.json` 中修改 `processing.line_separator` 来自定义分隔符
 
 ## 📖 使用说明
 
@@ -116,7 +124,8 @@ python main.py -i data/input/en.json -o data/output/tlh.json --from-text transla
     "use_cache": true,
     "cache_dir": "data/cache",
     "batch_short_texts": true,
-    "max_batch_length": 900
+    "max_batch_length": 900,
+    "line_separator": "~"
   },
   "logging": {
     "level": "INFO",

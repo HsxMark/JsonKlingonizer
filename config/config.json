@@ -14,7 +14,8 @@
   "processing": {
     "use_cache": true,
     "cache_dir": "data/cache",
-    "batch_short_texts": true
+    "batch_short_texts": true,
+    "line_separator": "~"
   },
   "logging": {
     "level": "INFO",
