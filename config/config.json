@@ -1,6 +1,13 @@
 {
+  "translator": {
+    "type": "google",
+    "source_lang": "auto",
+    "target_lang": "en"
+  },
   "api": {
     "base_url": "https://api.funtranslations.com/translate/klingon.json",
+    "libre_url": "https://libretranslate.com/translate",
+    "libre_api_key": null,
     "rate_limit": {
       "requests_per_hour": 5,
       "requests_per_day": 60,

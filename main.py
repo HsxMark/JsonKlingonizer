@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 JsonKlingonizer - JSON 值提取、翻译和重建工具
-将 JSON 文件中的值提取出来，通过 Klingon API 翻译后重新生成新的语言文件
+将 JSON 文件中的值提取出来，通过各种翻译服务翻译后重新生成新的语言文件
 """
 
 import argparse
@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
 
 from src.extractor import JSONExtractor
-from src.translator import KlingonTranslator
+from src.translators import KlingonTranslator, GoogleTranslator, LibreTranslator
 from src.rebuilder import JSONRebuilder
 from src.utils import CacheManager, ProgressTracker, Logger, load_config, ensure_dir
 
@@ -21,24 +21,33 @@ from src.utils import CacheManager, ProgressTracker, Logger, load_config, ensure
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(
-        description='JsonKlingonizer - 将 JSON 值翻译成克林贡语',
+        description='JsonKlingonizer - JSON 值翻译工具（支持多种翻译服务）',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
 使用示例:
-  # 基本使用
-  python main.py -i data/input/en.json -o data/output/tlh.json
+  # 使用 Google 翻译（英文翻译成中文）
+  python main.py -i data/input/en.json -o data/output/zh.json --translator google --source en --target zh-cn
+  
+  # 使用克林贡语翻译
+  python main.py -i en.json -o tlh.json --translator klingon
+  
+  # 使用 LibreTranslate
+  python main.py -i en.json -o zh.json --translator libre --source en --target zh
   
   # 使用缓存
-  python main.py -i en.json -o tlh.json --use-cache
+  python main.py -i en.json -o zh.json --translator google --use-cache
   
   # 仅提取值到文本文件（用于手动翻译）
   python main.py -i en.json --extract-only -t values.txt
   
   # 从翻译好的文本文件重建 JSON
-  python main.py -i en.json -o tlh.json --from-text translated.txt
+  python main.py -i en.json -o zh.json --from-text translated.txt
   
   # 清空翻译缓存
   python main.py --clear-cache
+  
+  # 列出支持的翻译器
+  python main.py --list-translators
         '''
     )
     
@@ -48,6 +57,14 @@ def main():
                        help='输出的 JSON 文件路径')
     parser.add_argument('-c', '--config', type=str, default='config/config.json',
                        help='配置文件路径 (默认: config/config.json)')
+    parser.add_argument('--translator', type=str, choices=['google', 'klingon', 'libre'],
+                       help='翻译器类型 (google, klingon, libre)')
+    parser.add_argument('--source', '--source-lang', type=str, dest='source_lang',
+                       help='源语言代码（如 en, zh-cn, auto）')
+    parser.add_argument('--target', '--target-lang', type=str, dest='target_lang',
+                       help='目标语言代码（如 en, zh-cn, ja）')
+    parser.add_argument('--list-translators', action='store_true',
+                       help='列出所有可用的翻译器')
     parser.add_argument('--use-cache', action='store_true',
                        help='使用翻译缓存')
     parser.add_argument('--clear-cache', action='store_true',
@@ -65,13 +82,31 @@ def main():
     
     args = parser.parse_args()
     
+    # 列出翻译器
+    if args.list_translators:
+        print("可用的翻译器：")
+        print("\n1. Google Translator (google) - 免费，无需 API Key")
+        print("   支持的语言：")
+        for code, name in GoogleTranslator.get_supported_languages().items():
+            print(f"     {code}: {name}")
+        print("\n2. Klingon Translator (klingon) - Fun Translations API")
+        print("   翻译为克林贡语")
+        print("\n3. LibreTranslate (libre) - 开源，可自托管")
+        print("   支持的语言：")
+        for code, name in LibreTranslator.get_supported_languages().items():
+            print(f"     {code}: {name}")
+        return 0
+    
     # 加载配置
     config = load_config(args.config)
     if not config:
         print("❌ 无法加载配置文件，使用默认配置")
         config = {
+            'translator': {'type': 'google', 'source_lang': 'auto', 'target_lang': 'en'},
             'api': {
                 'base_url': 'https://api.funtranslations.com/translate/klingon.json',
+                'libre_url': 'https://libretranslate.com/translate',
+                'libre_api_key': None,
                 'rate_limit': {'requests_per_hour': 5, 'requests_per_day': 60, 'wait_on_limit': True},
                 'retry': {'max_retries': 3, 'backoff_factor': 2}
             },
@@ -166,8 +201,21 @@ def main():
                 stats = cache_manager.get_stats()
                 logger.info(f"💾 缓存状态: {stats['total_entries']} 条记录")
             
+            # 确定翻译器类型
+            translator_type = args.translator or config.get('translator', {}).get('type', 'google')
+            source_lang = args.source_lang or config.get('translator', {}).get('source_lang', 'auto')
+            target_lang = args.target_lang or config.get('translator', {}).get('target_lang', 'en')
+            
             # 初始化翻译器
-            translator = KlingonTranslator(config, cache_manager)
+            if translator_type == 'klingon':
+                translator = KlingonTranslator(config, cache_manager)
+                logger.info("🖖 使用 Klingon 翻译器")
+            elif translator_type == 'libre':
+                translator = LibreTranslator(config, cache_manager)
+                logger.info(f"🌍 使用 LibreTranslate 翻译器 ({source_lang} -> {target_lang})")
+            else:  # google
+                translator = GoogleTranslator(config, cache_manager)
+                logger.info(f"🌍 使用 Google 翻译器 ({source_lang} -> {target_lang})")
             
             # 进度跟踪
             if config['logging'].get('show_progress', True):
@@ -176,10 +224,10 @@ def main():
                 def progress_callback(current, total, success_count):
                     tracker.update(current, success_count)
                 
-                values = translator.translate_batch(values, progress_callback)
+                values = translator.translate_batch(values, source_lang, target_lang, progress_callback)
                 tracker.finish()
             else:
-                values = translator.translate_batch(values)
+                values = translator.translate_batch(values, source_lang, target_lang)
             
             # 统计翻译结果
             translated_count = sum(1 for v in values if v.get('translated') and v['translated'] != v['original'])

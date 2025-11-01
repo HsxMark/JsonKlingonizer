@@ -1,0 +1,12 @@
+{
+  "app": {
+    "example": "示例文本",
+    "example_translation": "示例翻译"
+  },
+  "common":{
+    "cancel": "取消",
+    "confirm": "确认",
+    "ok": "确定",
+    "neko": "猫"
+  }
+}

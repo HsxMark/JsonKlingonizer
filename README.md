@@ -1,16 +1,20 @@
-# JsonKlingonizer 🖖
+# JsonKlingonizer 🌐
 
 [![Python](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://www.python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-一个 JSON 值提取、翻译和重建工具，可以将 JSON 文件中的所有文本值提取出来，通过 [Fun Translations Klingon API](https://funtranslations.com/klingon) 翻译成克林贡语（或其他语言），然后重新生成新的语言版本 JSON 文件。
+一个通用的 JSON 值提取、翻译和重建工具。支持多种翻译服务：
+- **Google Translate** - 免费，支持 100+ 种语言，无需 API Key
+- **LibreTranslate** - 开源、可自托管的翻译服务
+- **Klingon API** - 趣味翻译，支持克林贡语等特殊语言
 
 ## ✨ 特性
 
 - 🔍 **智能提取**：递归提取 JSON 中的所有字符串值，保留完整路径信息
-- 🌐 **API 翻译**：集成 Fun Translations API 进行自动翻译
+- 🌐 **多翻译器支持**：支持 Google Translate、LibreTranslate、Klingon API 等
+- 🌍 **多语言支持**：支持中文、英文、日文、韩文等 100+ 种语言
 - 💾 **缓存机制**：自动缓存翻译结果，避免重复调用 API
-- ⚡ **速率控制**：智能处理 API 速率限制（每小时 5 次，每天 60 次）
+- ⚡ **速率控制**：智能处理 API 速率限制
 - 🔄 **断点续传**：支持中断后继续翻译
 - 📝 **手动模式**：支持导出纯文本，手动翻译后再导入
 - 🎯 **精确重建**：保持原 JSON 结构，仅替换文本值
@@ -46,23 +50,39 @@ pip install -r requirements.txt
 
 ## 🚀 快速开始
 
-### 基本使用
+### 基本使用 - Google 翻译（推荐）
 
 ```bash
-# 翻译 JSON 文件
-python main.py -i data/input/en.json -o data/output/tlh.json
+# 英文翻译成中文
+python main.py -i data/input/en.json -o data/output/zh.json --translator google --source en --target zh-cn
+
+# 中文翻译成英文
+python main.py -i data/input/zh.json -o data/output/en.json --translator google --source zh-cn --target en
+
+# 自动检测源语言
+python main.py -i data/input/any.json -o data/output/zh.json --translator google --source auto --target zh-cn
+```
+
+### 使用其他翻译器
+
+```bash
+# 使用 LibreTranslate
+python main.py -i en.json -o zh.json --translator libre --source en --target zh
+
+# 使用克林贡语翻译（趣味）
+python main.py -i en.json -o tlh.json --translator klingon
 ```
 
 ### 使用缓存（推荐）
 
 ```bash
 # 启用缓存可以避免重复翻译相同的文本
-python main.py -i data/input/en.json -o data/output/tlh.json --use-cache
+python main.py -i en.json -o zh.json --translator google --use-cache
 ```
 
 ### 手动翻译模式
 
-当 API 限制较多时，可以使用手动翻译模式：
+当需要精确翻译或处理特殊内容时，可以使用手动翻译模式：
 
 ```bash
 # 1. 提取所有值到文本文件
@@ -70,17 +90,22 @@ python main.py -i data/input/en.json --extract-only -t values.txt
 
 # 2. 手动翻译 values.txt 文件
 #    注意：每行末尾都有一个 ~ 符号，这是行分隔符，翻译时请务必保留
-#    即使翻译后所有文本都在一行，只要保留了 ~ 符号就能正确导入
+#    可以使用任何翻译工具（DeepL、ChatGPT等）进行翻译
 
 # 3. 从翻译好的文本文件重建 JSON
-python main.py -i data/input/en.json -o data/output/tlh.json --from-text translated.txt
+python main.py -i data/input/en.json -o data/output/zh.json --from-text translated.txt
 ```
 
 **重要提示**：
 - 提取的文本文件中，每行末尾都有一个 `~` 符号作为行分隔符
 - 翻译时**必须保留**这个符号，它用于标记每个值的结尾
 - 即使将所有文本复制到翻译网站后变成一行，只要保留了 `~` 符号，导入时就能正确分割
-- 可以在 `config/config.json` 中修改 `processing.line_separator` 来自定义分隔符
+
+### 查看可用的翻译器
+
+```bash
+python main.py --list-translators
+```
 
 ## 📖 使用说明
 
@@ -88,19 +113,42 @@ python main.py -i data/input/en.json -o data/output/tlh.json --from-text transla
 
 ```
 必需参数:
-  -i, --input INPUT        输入的 JSON 文件路径
+  -i, --input INPUT              输入的 JSON 文件路径
 
 可选参数:
-  -o, --output OUTPUT      输出的 JSON 文件路径
-  -c, --config CONFIG      配置文件路径 (默认: config/config.json)
-  --use-cache             使用翻译缓存
-  --clear-cache           清空翻译缓存并退出
-  --extract-only          仅提取值到文本文件，不翻译
-  -t, --text-file TEXT    文本文件路径（用于提取或导入）
-  --from-text TEXT        从翻译好的文本文件导入
-  --log-file LOG          日志文件路径
-  -v, --verbose           显示详细信息
+  -o, --output OUTPUT            输出的 JSON 文件路径
+  -c, --config CONFIG            配置文件路径 (默认: config/config.json)
+  --translator {google,klingon,libre}
+                                 翻译器类型
+  --source, --source-lang LANG   源语言代码（如 en, zh-cn, auto）
+  --target, --target-lang LANG   目标语言代码（如 en, zh-cn, ja）
+  --list-translators             列出所有可用的翻译器
+  --use-cache                    使用翻译缓存
+  --clear-cache                  清空翻译缓存并退出
+  --extract-only                 仅提取值到文本文件，不翻译
+  -t, --text-file TEXT           文本文件路径（用于提取或导入）
+  --from-text TEXT               从翻译好的文本文件导入
+  --log-file LOG                 日志文件路径
+  -v, --verbose                  显示详细信息
 ```
+
+### 支持的语言代码
+
+**Google Translator / LibreTranslate：**
+- `auto` - 自动检测
+- `en` - English（英文）
+- `zh-cn` - 简体中文
+- `zh-tw` - 繁体中文
+- `ja` - 日本語
+- `ko` - 한국어
+- `fr` - Français（法语）
+- `de` - Deutsch（德语）
+- `es` - Español（西班牙语）
+- `ru` - Русский（俄语）
+- `ar` - العربية（阿拉伯语）
+- `pt` - Português（葡萄牙语）
+- `it` - Italiano（意大利语）
+- 更多语言请使用 `--list-translators` 查看
 
 ### 配置文件
 
@@ -108,8 +156,15 @@ python main.py -i data/input/en.json -o data/output/tlh.json --from-text transla
 
 ```json
 {
+  "translator": {
+    "type": "google",           // 默认翻译器: google, klingon, libre
+    "source_lang": "auto",      // 默认源语言
+    "target_lang": "zh-cn"      // 默认目标语言
+  },
   "api": {
     "base_url": "https://api.funtranslations.com/translate/klingon.json",
+    "libre_url": "https://libretranslate.com/translate",
+    "libre_api_key": null,      // LibreTranslate API Key（可选）
     "rate_limit": {
       "requests_per_hour": 5,
       "requests_per_day": 60,
@@ -123,8 +178,6 @@ python main.py -i data/input/en.json -o data/output/tlh.json --from-text transla
   "processing": {
     "use_cache": true,
     "cache_dir": "data/cache",
-    "batch_short_texts": true,
-    "max_batch_length": 900,
     "line_separator": "~"
   },
   "logging": {
@@ -158,14 +211,15 @@ JsonKlingonizer/
 
 ## 💡 使用示例
 
-### 示例 1：简单翻译
+### 示例 1：英文翻译成中文
 
 **输入文件** (`data/input/en.json`):
 ```json
 {
   "app": {
     "name": "My Application",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "description": "A powerful translation tool"
   },
   "messages": {
     "welcome": "Welcome to our app!",
@@ -176,45 +230,76 @@ JsonKlingonizer/
 
 **运行命令**:
 ```bash
-python main.py -i data/input/en.json -o data/output/tlh.json --use-cache
+python main.py -i data/input/en.json -o data/output/zh.json \
+  --translator google --source en --target zh-cn --use-cache
 ```
 
-**输出文件** (`data/output/tlh.json`):
+**输出文件** (`data/output/zh.json`):
 ```json
 {
   "app": {
-    "name": "wIj application",
-    "version": "1.0.0"
+    "name": "我的应用程序",
+    "version": "1.0.0",
+    "description": "一个强大的翻译工具"
   },
   "messages": {
-    "welcome": "qavan to maj app!",
-    "goodbye": "legh SoH later!"
+    "welcome": "欢迎使用我们的应用！",
+    "goodbye": "再见！"
   }
 }
 ```
 
-### 示例 2：批量处理
+### 示例 2：中文翻译成英文
 
 ```bash
-# 处理多个文件
+python main.py -i zh.json -o en.json \
+  --translator google --source zh-cn --target en --use-cache
+```
+
+### 示例 3：批量处理多个文件
+
+```bash
+# 将所有英文 JSON 翻译成中文
 for file in data/input/*.json; do
   filename=$(basename "$file" .json)
-  python main.py -i "$file" -o "data/output/${filename}_tlh.json" --use-cache
+  python main.py -i "$file" -o "data/output/${filename}_zh.json" \
+    --translator google --source en --target zh-cn --use-cache
 done
 ```
 
 ## ⚠️ 注意事项
 
-### API 限制
+### 翻译器对比
+
+| 翻译器 | 优点 | 缺点 | 适用场景 |
+|--------|------|------|----------|
+| **Google** | 免费、快速、质量高、支持100+语言 | 非官方API，可能不稳定 | 日常翻译、多语言支持 |
+| **LibreTranslate** | 开源、可自托管、隐私友好 | 需要部署服务器或API Key | 企业内部、隐私敏感场景 |
+| **Klingon** | 趣味性强 | API限制严格（每小时5次） | 趣味项目、特殊语言 |
+
+### Google Translator 使用说明
+
+- 使用免费的 `googletrans` 库，无需 API Key
+- 翻译速度快，质量高
+- 建议启用缓存以提高效率
+- 如遇到网络问题，可尝试使用 VPN
+
+### LibreTranslate 使用说明
+
+- 可使用公共实例：https://libretranslate.com
+- 或自托管：https://github.com/LibreTranslate/LibreTranslate
+- 在配置文件中设置 `api.libre_api_key` 以提高速率限制
+
+### Klingon API 限制
 
 Fun Translations 免费 API 有以下限制：
 - 每小时 5 次请求
 - 每天 60 次请求
 
 **建议**：
-1. 使用 `--use-cache` 参数启用缓存，避免重复翻译相同内容
-2. 对于大型文件，使用手动翻译模式（`--extract-only` 和 `--from-text`）
-3. 如需更高频率使用，可考虑升级到付费 API 或使用其他翻译服务
+1. 对于克林贡语翻译，使用 `--use-cache` 参数启用缓存
+2. 对于大型文件，使用手动翻译模式
+3. 如需更高频率使用，可考虑升级到付费 API
 
 ### 缓存管理
 
@@ -230,18 +315,35 @@ python main.py --clear-cache
 
 ### 自定义翻译器
 
-您可以修改 `src/translator.py` 来支持其他翻译 API：
+您可以轻松添加新的翻译服务。创建一个继承 `BaseTranslator` 的类：
 
 ```python
-class CustomTranslator:
-    def translate(self, text: str) -> str:
+from src.translators.base_translator import BaseTranslator
+
+class MyTranslator(BaseTranslator):
+    def translate(self, text: str, source_lang: str = 'auto', 
+                  target_lang: str = 'en') -> str:
         # 实现您的翻译逻辑
         pass
 ```
 
-### 扩展支持的数据类型
+### 使用 DeepL API
 
-默认情况下，工具只翻译字符串值。您可以修改 `src/extractor.py` 来支持其他数据类型。
+虽然项目暂未内置 DeepL 支持，但您可以：
+1. 使用 `--extract-only` 导出文本
+2. 使用 DeepL 网站或 API 翻译
+3. 使用 `--from-text` 导入翻译结果
+
+### 配置 LibreTranslate 自托管实例
+
+```json
+{
+  "api": {
+    "libre_url": "http://your-server:5000/translate",
+    "libre_api_key": "your-api-key"
+  }
+}
+```
 
 ## 🤝 贡献
 
@@ -259,7 +361,9 @@ class CustomTranslator:
 
 ## 🙏 致谢
 
-- [Fun Translations API](https://funtranslations.com/) - 提供克林贡语翻译服务
+- [googletrans](https://github.com/ssut/googletrans) - Google Translate 非官方 Python API
+- [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate) - 开源机器翻译 API
+- [Fun Translations API](https://funtranslations.com/) - 提供克林贡语等趣味翻译服务
 - 所有贡献者和使用者
 
 ## 📮 联系方式
@@ -269,4 +373,4 @@ class CustomTranslator:
 
 ---
 
-**Qapla'!** (克林贡语：成功！) 🖖
+**Made with ❤️ for the translation community** 🌍
