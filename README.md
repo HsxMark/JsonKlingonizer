@@ -192,9 +192,14 @@ python main.py --list-translators
 ```
 JsonKlingonizer/
 ├── src/
+│   ├── translators/          # 翻译器模块
+│   │   ├── __init__.py       # 模块初始化
+│   │   ├── base_translator.py      # 翻译器基类
+│   │   ├── googletrans_translator.py  # Google 翻译器
+│   │   ├── libre_translator.py     # LibreTranslate 翻译器
+│   │   └── klingon_translator.py   # 克林贡语翻译器
 │   ├── __init__.py           # 包初始化
 │   ├── extractor.py          # JSON 值提取器
-│   ├── translator.py         # 克林贡语翻译器
 │   ├── rebuilder.py          # JSON 重建器
 │   └── utils.py              # 工具函数（缓存、日志等）
 ├── data/
@@ -203,6 +208,13 @@ JsonKlingonizer/
 │   └── cache/                # 翻译缓存
 ├── config/
 │   └── config.json           # 配置文件
+├── docs/
+│   └── LIBRETRANSLATE_SETUP.md  # LibreTranslate 部署指南
+├── scripts/
+│   ├── deploy_libretranslate.sh  # LibreTranslate 部署脚本
+│   └── start_libretranslate_compose.sh  # Docker Compose 启动脚本
+├── examples/                 # 示例文件
+├── docker-compose.yml        # Docker Compose 配置
 ├── main.py                   # 主入口脚本
 ├── requirements.txt          # Python 依赖
 ├── LICENSE                   # MIT 许可证
@@ -286,9 +298,44 @@ done
 
 ### LibreTranslate 使用说明
 
-- 可使用公共实例：https://libretranslate.com
-- 或自托管：https://github.com/LibreTranslate/LibreTranslate
-- 在配置文件中设置 `api.libre_api_key` 以提高速率限制
+**三种使用方式**：
+
+1. **自托管（推荐）** - 完全免费、无限制、隐私友好
+   ```bash
+   # 一键部署（推荐）
+   bash scripts/deploy_libretranslate.sh
+   
+   # 或使用 Docker Compose
+   bash scripts/start_libretranslate_compose.sh
+   
+   # 或直接使用 Docker
+   docker run -d -p 5000:5000 libretranslate/libretranslate
+   ```
+   
+   详细部署指南：查看 [`docs/LIBRETRANSLATE_SETUP.md`](docs/LIBRETRANSLATE_SETUP.md)
+
+2. **使用公共实例** - 免费但有速率限制
+   - 公共实例：https://libretranslate.com
+   - 配置：`"libre_url": "https://libretranslate.com/translate"`
+
+3. **自己的服务器** - 完全控制
+   - 部署到云服务器（AWS、阿里云等）
+   - 配置：`"libre_url": "http://your-server:5000/translate"`
+
+**配置示例**：
+```json
+{
+  "translator": {
+    "type": "libre",
+    "source_lang": "en",
+    "target_lang": "zh"
+  },
+  "api": {
+    "libre_url": "http://localhost:5000/translate",
+    "libre_api_key": null
+  }
+}
+```
 
 ### Klingon API 限制
 
