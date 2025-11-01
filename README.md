@@ -11,7 +11,8 @@
 ## ✨ 特性
 
 - 🔍 **智能提取**：递归提取 JSON 中的所有字符串值，保留完整路径信息
-- 🌐 **多翻译器支持**：支持 Google Translate、LibreTranslate、Klingon API 等
+- � **部分翻译**：根据关键词（如 `%TODO`）只翻译未完成的内容，跳过已翻译部分
+- �🌐 **多翻译器支持**：支持 Google Translate、LibreTranslate、Klingon API 等
 - 🌍 **多语言支持**：支持中文、英文、日文、韩文等 100+ 种语言
 - 💾 **缓存机制**：自动缓存翻译结果，避免重复调用 API
 - ⚡ **速率控制**：智能处理 API 速率限制
@@ -80,6 +81,49 @@ python main.py -i en.json -o tlh.json --translator klingon
 python main.py -i en.json -o zh.json --translator google --use-cache
 ```
 
+### 部分翻译（增量翻译）🆕
+
+当 JSON 文件中有些内容已翻译，有些还未翻译（标记为 `%TODO` 等）时，可以只翻译未完成的部分：
+
+```bash
+# 只翻译包含 %TODO 标记的内容，翻译后移除标记
+python main.py -i fr.json -o fr.json \
+  --translator google --source zh-cn --target fr \
+  --filter-keyword "%TODO" --remove-keyword --use-cache
+
+# 提取包含 %TODO 的内容到文本文件（用于手动翻译）
+python main.py -i fr.json --extract-only -t todo.txt --filter-keyword "%TODO"
+
+# 从翻译好的文本文件导入
+python main.py -i fr.json -o fr-translated.json --from-text todo-translated.txt
+```
+
+**示例**：
+
+输入文件包含已翻译和未翻译的内容：
+```json
+{
+  "settings": {
+    "version": "Version",
+    "checkUpdate": "%TODO 检查更新",
+    "author": "Auteur"
+  }
+}
+```
+
+运行翻译后，只有包含 `%TODO` 的内容被翻译：
+```json
+{
+  "settings": {
+    "version": "Version",
+    "checkUpdate": "Vérifier les mises à jour",
+    "author": "Auteur"
+  }
+}
+```
+
+详细说明请参考：[部分翻译功能使用指南](docs/PARTIAL_TRANSLATION_GUIDE.md)
+
 ### 手动翻译模式
 
 当需要精确翻译或处理特殊内容时，可以使用手动翻译模式：
@@ -128,6 +172,8 @@ python main.py --list-translators
   --extract-only                 仅提取值到文本文件，不翻译
   -t, --text-file TEXT           文本文件路径（用于提取或导入）
   --from-text TEXT               从翻译好的文本文件导入
+  --filter-keyword KEYWORD       过滤关键词，只提取包含此关键词的值（如 %TODO）
+  --remove-keyword               翻译后从结果中移除过滤关键词
   --log-file LOG                 日志文件路径
   -v, --verbose                  显示详细信息
 ```

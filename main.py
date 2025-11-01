@@ -43,6 +43,12 @@ def main():
   # 从翻译好的文本文件重建 JSON
   python main.py -i en.json -o zh.json --from-text translated.txt
   
+  # 只翻译包含 %TODO 的内容（部分翻译）
+  python main.py -i fr.json -o fr.json --translator google --source zh-cn --target fr --filter-keyword "%%TODO" --remove-keyword
+  
+  # 提取包含 %TODO 的内容到文本文件
+  python main.py -i fr.json --extract-only -t todo.txt --filter-keyword "%%TODO"
+  
   # 清空翻译缓存
   python main.py --clear-cache
   
@@ -75,6 +81,10 @@ def main():
                        help='文本文件路径（用于提取或导入）')
     parser.add_argument('--from-text', type=str,
                        help='从翻译好的文本文件导入')
+    parser.add_argument('--filter-keyword', type=str,
+                       help='过滤关键词，只提取包含此关键词的值（如 %%TODO）')
+    parser.add_argument('--remove-keyword', action='store_true',
+                       help='翻译后从结果中移除过滤关键词')
     parser.add_argument('--log-file', type=str,
                        help='日志文件路径')
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -137,9 +147,21 @@ def main():
     try:
         # ============= 提取阶段 =============
         logger.info(f"📖 正在读取 JSON 文件: {args.input}")
-        extractor = JSONExtractor()
+        
+        # 如果指定了过滤关键词，使用过滤模式
+        if args.filter_keyword:
+            logger.info(f"🔍 过滤模式：只提取包含 '{args.filter_keyword}' 的内容")
+            extractor = JSONExtractor(filter_keyword=args.filter_keyword)
+        else:
+            extractor = JSONExtractor()
+        
         original_json, values = extractor.extract_from_file(args.input)
         logger.info(f"✅ 提取了 {len(values)} 个字符串值")
+        
+        # 如果使用了过滤关键词但没有找到匹配项
+        if args.filter_keyword and len(values) == 0:
+            logger.warning(f"⚠️  未找到包含 '{args.filter_keyword}' 的内容")
+            return 0
         
         # 仅提取模式
         if args.extract_only:
@@ -240,7 +262,13 @@ def main():
         
         logger.info("🔨 正在重建 JSON...")
         rebuilder = JSONRebuilder(original_json)
-        translated_json = rebuilder.rebuild(values)
+        
+        # 如果使用了过滤关键词和移除关键词选项，进行部分更新
+        if args.filter_keyword and args.remove_keyword:
+            logger.info(f"🔧 部分更新模式：将移除关键词 '{args.filter_keyword}'")
+            translated_json = rebuilder.rebuild(values, partial_update=True, filter_keyword=args.filter_keyword)
+        else:
+            translated_json = rebuilder.rebuild(values)
         
         # 保存到文件
         logger.info(f"💾 正在保存到: {args.output}")

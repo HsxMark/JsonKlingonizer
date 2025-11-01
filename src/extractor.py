@@ -10,8 +10,15 @@ from typing import Dict, List, Any, Union
 class JSONExtractor:
     """JSON 值提取器"""
     
-    def __init__(self):
+    def __init__(self, filter_keyword: str = None):
+        """
+        初始化提取器
+        
+        Args:
+            filter_keyword: 可选的过滤关键词，只提取包含此关键词的值
+        """
         self.values = []
+        self.filter_keyword = filter_keyword
     
     def extract_from_file(self, file_path: str) -> tuple:
         """
@@ -51,11 +58,13 @@ class JSONExtractor:
                 
         elif isinstance(obj, str):
             # 只提取字符串类型的值
-            self.values.append({
-                "path": path,
-                "original": obj,
-                "translated": None  # 将在翻译后填充
-            })
+            # 如果设置了过滤关键词，则只提取包含该关键词的值
+            if self.filter_keyword is None or self.filter_keyword in obj:
+                self.values.append({
+                    "path": path,
+                    "original": obj,
+                    "translated": None  # 将在翻译后填充
+                })
     
     def export_to_text(self, output_path: str, line_separator: str = "~") -> None:
         """
@@ -81,17 +90,18 @@ class JSONExtractor:
         return [item['original'] for item in self.values]
 
 
-def extract_json_values(file_path: str) -> tuple:
+def extract_json_values(file_path: str, filter_keyword: str = None) -> tuple:
     """
     便捷函数：从 JSON 文件提取值
     
     Args:
         file_path: JSON 文件路径
+        filter_keyword: 可选的过滤关键词
         
     Returns:
         (原始JSON对象, 提取的值列表)
     """
-    extractor = JSONExtractor()
+    extractor = JSONExtractor(filter_keyword)
     return extractor.extract_from_file(file_path)
 
 

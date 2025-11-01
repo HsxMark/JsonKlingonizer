@@ -20,12 +20,16 @@ class JSONRebuilder:
         """
         self.original_json = original_json
     
-    def rebuild(self, translated_values: List[Dict[str, Any]]) -> Any:
+    def rebuild(self, translated_values: List[Dict[str, Any]], 
+                partial_update: bool = False, 
+                filter_keyword: str = None) -> Any:
         """
         使用翻译后的值重建 JSON
         
         Args:
             translated_values: 包含路径和翻译值的列表
+            partial_update: 是否为部分更新模式（只更新提供的值）
+            filter_keyword: 过滤关键词（用于在部分更新时去除关键词）
             
         Returns:
             重建后的 JSON 对象
@@ -37,6 +41,12 @@ class JSONRebuilder:
         for item in translated_values:
             path = item['path']
             translated = item.get('translated', item['original'])
+            
+            # 如果是部分更新模式且有过滤关键词，需要移除关键词
+            if partial_update and filter_keyword and translated:
+                # 移除关键词（如 %TODO ）
+                translated = translated.replace(filter_keyword, '').strip()
+            
             self._set_value_by_path(result, path, translated)
         
         return result
@@ -133,19 +143,22 @@ class JSONRebuilder:
             json.dump(json_obj, f, indent=indent, ensure_ascii=ensure_ascii)
 
 
-def rebuild_json(original_json: Any, translated_values: List[Dict[str, Any]]) -> Any:
+def rebuild_json(original_json: Any, translated_values: List[Dict[str, Any]], 
+                 partial_update: bool = False, filter_keyword: str = None) -> Any:
     """
     便捷函数：重建 JSON
     
     Args:
         original_json: 原始 JSON 数据
         translated_values: 翻译后的值列表
+        partial_update: 是否为部分更新模式
+        filter_keyword: 过滤关键词
         
     Returns:
         重建后的 JSON 对象
     """
     rebuilder = JSONRebuilder(original_json)
-    return rebuilder.rebuild(translated_values)
+    return rebuilder.rebuild(translated_values, partial_update, filter_keyword)
 
 
 if __name__ == "__main__":
