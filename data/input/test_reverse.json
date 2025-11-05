@@ -1,0 +1,7 @@
+{
+  "test": {
+    "button": "Button",
+    "hello": "Hello World",
+    "number": "12345"
+  }
+}

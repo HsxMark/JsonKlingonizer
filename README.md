@@ -72,6 +72,9 @@ python main.py -i en.json -o zh.json --translator libre --source en --target zh
 
 # 使用克林贡语翻译（趣味）
 python main.py -i en.json -o tlh.json --translator klingon
+
+# 使用反转翻译（趣味）
+python main.py -i en.json -o reverse.json --translator reverse
 ```
 
 ### 使用缓存（推荐）
@@ -243,7 +246,8 @@ JsonKlingonizer/
 │   │   ├── base_translator.py      # 翻译器基类
 │   │   ├── googletrans_translator.py  # Google 翻译器
 │   │   ├── libre_translator.py     # LibreTranslate 翻译器
-│   │   └── klingon_translator.py   # 克林贡语翻译器
+│   │   ├── klingon_translator.py   # 克林贡语翻译器
+│   │   └── reverse_translator.py   # 反转翻译器
 │   ├── __init__.py           # 包初始化
 │   ├── extractor.py          # JSON 值提取器
 │   ├── rebuilder.py          # JSON 重建器
@@ -334,6 +338,7 @@ done
 | **Google** | 免费、快速、质量高、支持100+语言 | 非官方API，可能不稳定 | 日常翻译、多语言支持 |
 | **LibreTranslate** | 开源、可自托管、隐私友好 | 需要部署服务器或API Key | 企业内部、隐私敏感场景 |
 | **Klingon** | 趣味性强 | API限制严格（每小时5次） | 趣味项目、特殊语言 |
+| **Reverse** | 本地处理、无网络依赖、即时响应 | 仅用于趣味翻译 | 开发测试、娱乐用途 |
 
 ### Google Translator 使用说明
 

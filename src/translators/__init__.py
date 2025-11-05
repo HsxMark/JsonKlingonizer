@@ -7,10 +7,12 @@ from .base_translator import BaseTranslator
 from .klingon_translator import KlingonTranslator
 from .googletrans_translator import GoogleTranslator
 from .libre_translator import LibreTranslator
+from .reverse_translator import ReverseTranslator
 
 __all__ = [
     'BaseTranslator',
     'KlingonTranslator', 
     'GoogleTranslator',
     'LibreTranslator',
+    'ReverseTranslator',
 ]
