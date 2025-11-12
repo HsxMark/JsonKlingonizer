@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
 
 from src.extractor import JSONExtractor
-from src.translators import KlingonTranslator, GoogleTranslator, LibreTranslator, ReverseTranslator
+from src.translators import KlingonTranslator, GoogleTranslator, LibreTranslator, ReverseTranslator, FlipTranslator
 from src.rebuilder import JSONRebuilder
 from src.utils import CacheManager, ProgressTracker, Logger, load_config, ensure_dir
 
@@ -63,8 +63,8 @@ def main():
                        help='输出的 JSON 文件路径')
     parser.add_argument('-c', '--config', type=str, default='config/config.json',
                        help='配置文件路径 (默认: config/config.json)')
-    parser.add_argument('--translator', type=str, choices=['google', 'klingon', 'libre', 'reverse'],
-                       help='翻译器类型 (google, klingon, libre, reverse)')
+    parser.add_argument('--translator', type=str, choices=['google', 'klingon', 'libre', 'reverse', 'flip'],
+                       help='翻译器类型 (google, klingon, libre, reverse, flip)')
     parser.add_argument('--source', '--source-lang', type=str, dest='source_lang',
                        help='源语言代码（如 en, zh-cn, auto）')
     parser.add_argument('--target', '--target-lang', type=str, dest='target_lang',
@@ -107,6 +107,8 @@ def main():
             print(f"     {code}: {name}")
         print("\n4. Reverse Translator (reverse) - 趣味翻译")
         print("   将文本字符顺序颠倒")
+        print("\n5. Flip Translator (flip) - 趣味翻译")
+        print("   将英文字符翻转为上下颠倒的样子")
         return 0
     
     # 加载配置
@@ -240,6 +242,9 @@ def main():
             elif translator_type == 'reverse':
                 translator = ReverseTranslator(config, cache_manager)
                 logger.info("🔄 使用反转翻译器")
+            elif translator_type == 'flip':
+                translator = FlipTranslator(config, cache_manager)
+                logger.info("🙃 使用字符翻转翻译器")
             else:  # google
                 translator = GoogleTranslator(config, cache_manager)
                 logger.info(f"🌍 使用 Google 翻译器 ({source_lang} -> {target_lang})")

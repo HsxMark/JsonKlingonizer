@@ -8,6 +8,7 @@ from .klingon_translator import KlingonTranslator
 from .googletrans_translator import GoogleTranslator
 from .libre_translator import LibreTranslator
 from .reverse_translator import ReverseTranslator
+from .flip_translator import FlipTranslator
 
 __all__ = [
     'BaseTranslator',
@@ -15,4 +16,5 @@ __all__ = [
     'GoogleTranslator',
     'LibreTranslator',
     'ReverseTranslator',
+    'FlipTranslator',
 ]
